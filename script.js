@@ -25,7 +25,7 @@ const routePointIcon = L.divIcon({
 
 // Térkép inicializálása
 map = L.map('map').setView([47.4979, 19.0402], 13);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '© OpenStreetMap © CARTO',
 }).addTo(map);
 
