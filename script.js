@@ -43,6 +43,17 @@ document.getElementById('mode-home').addEventListener('click', () => setMode('ho
 document.getElementById('clear-btn').addEventListener('click', clearMap);
 document.getElementById('goto-home-btn').addEventListener('click', gotoHome);
 document.getElementById('clear-home-btn').addEventListener('click', clearHome);
+const suggestBtn = document.getElementById('suggest-btn');
+if (suggestBtn) {
+    suggestBtn.addEventListener('click', () => {
+        const val = parseFloat(document.getElementById('suggest-distance').value);
+        if (isNaN(val) || val <= 0) {
+            alert('Adj meg érvényes távot!');
+            return;
+        }
+        suggestRoute(val);
+    });
+}
 
 // Elkerülő zóna előnézetéhez szükséges változók
 let previewMarker = null;
@@ -288,6 +299,54 @@ function clearAvoidZone() {
         map.removeLayer(z.circle);
     });
     avoidZones = [];
+}
+
+// Segédfüggvény egy pont számításához adott távolságra és szögben
+function destinationPoint(lat, lng, distance, bearing) {
+    const R = 6371000; // földsugár méterben
+    const brng = bearing * Math.PI / 180;
+    const lat1 = lat * Math.PI / 180;
+    const lon1 = lng * Math.PI / 180;
+
+    const lat2 = Math.asin(
+        Math.sin(lat1) * Math.cos(distance / R) +
+        Math.cos(lat1) * Math.sin(distance / R) * Math.cos(brng)
+    );
+    const lon2 = lon1 + Math.atan2(
+        Math.sin(brng) * Math.sin(distance / R) * Math.cos(lat1),
+        Math.cos(distance / R) - Math.sin(lat1) * Math.sin(lat2)
+    );
+
+    return L.latLng(lat2 * 180 / Math.PI, lon2 * 180 / Math.PI);
+}
+
+function suggestRoute(distanceKm) {
+    if (!homeMarker) {
+        alert('Előbb állítsd be az otthonod!');
+        return;
+    }
+
+    clearMap();
+
+    const home = homeMarker.getLatLng();
+    const radius = (distanceKm * 1000) / (2 * Math.PI);
+
+    routeWaypoints.push(home);
+
+    // Négy pontot generálunk a kör különböző irányaiban
+    [0, 90, 180, 270].forEach(angle => {
+        const p = destinationPoint(home.lat, home.lng, radius, angle);
+        routeWaypoints.push(p);
+        const marker = L.marker(p, { icon: routePointIcon }).addTo(map);
+        marker.on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            removeRoutePoint(marker, p);
+        });
+        routeMarkers.push(marker);
+    });
+
+    routeWaypoints.push(home);
+    updateRoute();
 }
 
 function clearMap() {
