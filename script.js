@@ -43,6 +43,14 @@ document.getElementById('mode-home').addEventListener('click', () => setMode('ho
 document.getElementById('clear-btn').addEventListener('click', clearMap);
 document.getElementById('goto-home-btn').addEventListener('click', gotoHome);
 document.getElementById('clear-home-btn').addEventListener('click', clearHome);
+document.getElementById('suggest-btn').addEventListener('click', () => {
+    const val = parseFloat(document.getElementById('distance-input').value);
+    if (isNaN(val) || val <= 0) {
+        alert('Kérlek adj meg egy érvényes távolságot!');
+        return;
+    }
+    suggestRoute(val);
+});
 
 function setMode(mode) {
     currentMode = mode;
@@ -174,6 +182,39 @@ function updateRoute() {
         const distance = summary.totalDistance / 1000;
         document.getElementById('distance').textContent = distance.toFixed(2) + ' km';
     });
+}
+
+function offsetLatLng(latlng, distanceMeters, bearingDegrees) {
+    const R = 6378137;
+    const bearing = bearingDegrees * Math.PI / 180;
+    const lat1 = latlng.lat * Math.PI / 180;
+    const lon1 = latlng.lng * Math.PI / 180;
+
+    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(distanceMeters / R) +
+        Math.cos(lat1) * Math.sin(distanceMeters / R) * Math.cos(bearing));
+    const lon2 = lon1 + Math.atan2(Math.sin(bearing) * Math.sin(distanceMeters / R) * Math.cos(lat1),
+        Math.cos(distanceMeters / R) - Math.sin(lat1) * Math.sin(lat2));
+
+    return L.latLng(lat2 * 180 / Math.PI, lon2 * 180 / Math.PI);
+}
+
+function suggestRoute(distanceKm) {
+    if (!homeMarker) {
+        alert('Először állítsd be az otthon helyszínét!');
+        return;
+    }
+
+    clearMap();
+
+    const center = homeMarker.getLatLng();
+    const radius = (distanceKm * 1000) / (2 * Math.PI);
+    routeWaypoints = [center];
+    [0, 120, 240].forEach(bearing => {
+        routeWaypoints.push(offsetLatLng(center, radius, bearing));
+    });
+    routeWaypoints.push(center);
+    updateRoute();
+    map.fitBounds(L.latLngBounds(routeWaypoints));
 }
 
 // --- Takarító és egyéb funkciók ---

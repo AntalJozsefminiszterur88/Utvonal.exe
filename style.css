@@ -68,6 +68,16 @@ body {
     text-transform: uppercase;
 }
 
+.control-group input {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 3px;
+    background-color: var(--background-tertiary);
+    color: var(--interactive-active);
+    margin-bottom: 10px;
+}
+
 .mode-buttons {
     display: flex;
     width: 100%;
