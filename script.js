@@ -44,19 +44,12 @@ document.getElementById('clear-btn').addEventListener('click', clearMap);
 document.getElementById('goto-home-btn').addEventListener('click', gotoHome);
 document.getElementById('clear-home-btn').addEventListener('click', clearHome);
 
-// Elkerülő zóna hatótáv csúszka kezelése
-const radiusSlider = document.getElementById('avoid-radius');
-const radiusValueLabel = document.getElementById('avoid-radius-value');
-if (radiusSlider) {
-    currentAvoidRadius = Number(radiusSlider.value);
-    radiusValueLabel.textContent = currentAvoidRadius;
-    radiusSlider.addEventListener('input', (e) => {
-        currentAvoidRadius = Number(e.target.value);
-        radiusValueLabel.textContent = currentAvoidRadius;
-    });
-}
+// Elkerülő zóna előnézetéhez szükséges változók
+let previewMarker = null;
+let previewCircle = null;
 
 function setMode(mode) {
+    if (currentMode === 'avoid') stopAvoidPreview();
     currentMode = mode;
     ['route', 'avoid', 'home'].forEach(m => {
         document.getElementById(`mode-${m}`).classList.toggle('active', m === mode);
@@ -66,16 +59,66 @@ function setMode(mode) {
         container.style.cursor = "url('ház.png') 20 20, auto";
     } else if (mode === 'avoid') {
         container.style.cursor = "url('zászló.png') 15 30, auto";
+        startAvoidPreview();
     } else {
         container.style.cursor = '';
     }
 }
 
 map.on('click', function(e) {
-    if (currentMode === 'route') addRoutePoint(e.latlng);
-    else if (currentMode === 'avoid') addAvoidFlag(e.latlng);
-    else if (currentMode === 'home') setHomeLocation(e.latlng);
+    if (currentMode === 'route') {
+        addRoutePoint(e.latlng);
+    } else if (currentMode === 'avoid') {
+        addAvoidFlag(e.latlng);
+        removePreview();
+    } else if (currentMode === 'home') {
+        setHomeLocation(e.latlng);
+    }
 });
+
+function startAvoidPreview() {
+    map.scrollWheelZoom.disable();
+    map.on('mousemove', onAvoidMouseMove);
+    map.on('wheel', onAvoidWheel);
+}
+
+function stopAvoidPreview() {
+    map.scrollWheelZoom.enable();
+    map.off('mousemove', onAvoidMouseMove);
+    map.off('wheel', onAvoidWheel);
+    removePreview();
+}
+
+function onAvoidMouseMove(e) {
+    if (!previewMarker) {
+        previewMarker = L.marker(e.latlng, { icon: avoidFlagIcon, interactive: false }).addTo(map);
+        previewCircle = L.circle(e.latlng, {
+            color: '#ed4245',
+            fillColor: '#ed4245',
+            fillOpacity: 0.25,
+            radius: currentAvoidRadius,
+            interactive: false
+        }).addTo(map);
+    } else {
+        previewMarker.setLatLng(e.latlng);
+        previewCircle.setLatLng(e.latlng);
+    }
+    previewCircle.setRadius(currentAvoidRadius);
+}
+
+function onAvoidWheel(e) {
+    if (currentMode !== 'avoid') return;
+    e.preventDefault();
+    if (e.deltaY < 0) currentAvoidRadius += 100;
+    else currentAvoidRadius -= 100;
+    currentAvoidRadius = Math.max(100, Math.min(5000, currentAvoidRadius));
+    if (previewCircle) previewCircle.setRadius(currentAvoidRadius);
+}
+
+function removePreview() {
+    if (previewMarker) { map.removeLayer(previewMarker); previewMarker = null; }
+    if (previewCircle) { map.removeLayer(previewCircle); previewCircle = null; }
+}
 
 // --- Otthon Kezelése ---
 function setHomeLocation(latlng) {
@@ -201,16 +244,42 @@ function addAvoidFlag(latlng) {
 
     marker.on('click', (e) => {
         L.DomEvent.stopPropagation(e);
-        removeAvoidZone(marker, circle);
+        showAvoidControls(marker, circle);
     });
 
     avoidZones.push({ marker, circle });
+}
+
+function showAvoidControls(marker, circle) {
+    const container = L.DomUtil.create('div', 'avoid-popup');
+    const slider = L.DomUtil.create('input', '', container);
+    slider.type = 'range';
+    slider.min = 100;
+    slider.max = 5000;
+    slider.step = 100;
+    slider.value = circle.getRadius();
+    slider.addEventListener('input', () => {
+        circle.setRadius(Number(slider.value));
+    });
+
+    const delBtn = L.DomUtil.create('button', '', container);
+    delBtn.textContent = 'Törlés';
+    delBtn.addEventListener('click', () => {
+        removeAvoidZone(marker, circle);
+        map.closePopup();
+    });
+
+    L.popup({ closeOnClick: false })
+        .setLatLng(marker.getLatLng())
+        .setContent(container)
+        .openOn(map);
 }
 
 function removeAvoidZone(marker, circle) {
     map.removeLayer(marker);
     map.removeLayer(circle);
     avoidZones = avoidZones.filter(z => z.marker !== marker);
+    map.closePopup();
 }
 
 function clearAvoidZone() {
