@@ -4,8 +4,8 @@ let currentMode = 'route';
 let routeWaypoints = [];
 let routeMarkers = []; // A kék pontok jelölőinek tárolója
 let routingControl = null;
-let avoidMarkers = [];
-let avoidCircle = null;
+let avoidZones = [];
+let currentAvoidRadius = 500; // alapértelmezett hatótáv méterben
 let homeMarker = null;
 
 // ÚJ: házikó ikon a repo-ban található képből
@@ -43,6 +43,18 @@ document.getElementById('mode-home').addEventListener('click', () => setMode('ho
 document.getElementById('clear-btn').addEventListener('click', clearMap);
 document.getElementById('goto-home-btn').addEventListener('click', gotoHome);
 document.getElementById('clear-home-btn').addEventListener('click', clearHome);
+
+// Elkerülő zóna hatótáv csúszka kezelése
+const radiusSlider = document.getElementById('avoid-radius');
+const radiusValueLabel = document.getElementById('avoid-radius-value');
+if (radiusSlider) {
+    currentAvoidRadius = Number(radiusSlider.value);
+    radiusValueLabel.textContent = currentAvoidRadius;
+    radiusSlider.addEventListener('input', (e) => {
+        currentAvoidRadius = Number(e.target.value);
+        radiusValueLabel.textContent = currentAvoidRadius;
+    });
+}
 
 function setMode(mode) {
     currentMode = mode;
@@ -179,22 +191,34 @@ function updateRoute() {
 // --- Takarító és egyéb funkciók ---
 
 function addAvoidFlag(latlng) {
-    if (avoidMarkers.length >= 2) clearAvoidZone();
     const marker = L.marker(latlng, { icon: avoidFlagIcon }).addTo(map);
-    avoidMarkers.push(marker);
+    const circle = L.circle(latlng, {
+        color: '#ed4245',
+        fillColor: '#ed4245',
+        fillOpacity: 0.25,
+        radius: currentAvoidRadius
+    }).addTo(map);
 
-    if (avoidMarkers.length === 2) {
-        const center = avoidMarkers[0].getLatLng();
-        const radius = map.distance(center, avoidMarkers[1].getLatLng());
-        avoidCircle = L.circle(center, { color: '#ed4245', fillColor: '#ed4245', fillOpacity: 0.25, radius: radius }).addTo(map);
-    }
+    marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        removeAvoidZone(marker, circle);
+    });
+
+    avoidZones.push({ marker, circle });
+}
+
+function removeAvoidZone(marker, circle) {
+    map.removeLayer(marker);
+    map.removeLayer(circle);
+    avoidZones = avoidZones.filter(z => z.marker !== marker);
 }
 
 function clearAvoidZone() {
-    avoidMarkers.forEach(marker => map.removeLayer(marker));
-    avoidMarkers = [];
-    if (avoidCircle) map.removeLayer(avoidCircle);
-    avoidCircle = null;
+    avoidZones.forEach(z => {
+        map.removeLayer(z.marker);
+        map.removeLayer(z.circle);
+    });
+    avoidZones = [];
 }
 
 function clearMap() {
