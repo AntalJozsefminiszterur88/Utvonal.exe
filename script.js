@@ -8,12 +8,19 @@ let avoidMarkers = [];
 let avoidCircle = null;
 let homeMarker = null;
 
-// ÚJ: Szép, zöld házikó ikon
+// ÚJ: házikó ikon a repo-ban található képből
 const homeIcon = L.icon({
-    iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzNiYTU1ZCIgd2lkdGg9IjM4cHgiIGhlaWdodD0iMzhweCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMiA1LjY5bDUgNC41VjE4aC0yvjE2aC0zdi02SDl2Nkg2VjEwLjE5bDUtNC41TTQgMTBoOHYtM0w0IDh2MnpNMTIgMyAyIDIyaDEwbC04LTd2LTZoNnY0aDR2LTlsOC03eiIvPjwvc3ZnPg==',
-    iconSize: [38, 38],
-    iconAnchor: [19, 38],
-    popupAnchor: [0, -38]
+    iconUrl: 'ház.png',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40]
+});
+
+// Zászló ikon az elkerülő pontokhoz
+const avoidFlagIcon = L.icon({
+    iconUrl: 'zászló.png',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30]
 });
 
 // ÚJ: Egyedi kék pont ikon CSS-ből létrehozva
@@ -42,6 +49,14 @@ function setMode(mode) {
     ['route', 'avoid', 'home'].forEach(m => {
         document.getElementById(`mode-${m}`).classList.toggle('active', m === mode);
     });
+    const container = map.getContainer();
+    if (mode === 'home') {
+        container.style.cursor = "url('ház.png') 20 20, auto";
+    } else if (mode === 'avoid') {
+        container.style.cursor = "url('zászló.png') 15 30, auto";
+    } else {
+        container.style.cursor = '';
+    }
 }
 
 map.on('click', function(e) {
@@ -163,8 +178,7 @@ function updateRoute() {
 
 function addAvoidFlag(latlng) {
     if (avoidMarkers.length >= 2) clearAvoidZone();
-    const flagIcon = L.icon({ iconUrl: 'http://maps.google.com/mapfiles/ms/icons/red-flag.png', iconSize: [40, 40] });
-    const marker = L.marker(latlng, { icon: flagIcon }).addTo(map);
+    const marker = L.marker(latlng, { icon: avoidFlagIcon }).addTo(map);
     avoidMarkers.push(marker);
 
     if (avoidMarkers.length === 2) {
