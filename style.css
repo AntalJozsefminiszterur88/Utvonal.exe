@@ -159,3 +159,22 @@ input[type="range"] {
     border: 2px solid white; /* Fehér keret */
     box-shadow: 0 0 5px rgba(0,0,0,0.5); /* Enyhe árnyék */
 }
+
+.avoid-popup {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.avoid-popup button {
+    background-color: var(--button-danger-bg);
+    color: white;
+    border: none;
+    padding: 5px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.avoid-popup button:hover {
+    background-color: var(--button-danger-hover);
+}
