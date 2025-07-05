@@ -55,6 +55,7 @@ function setHomeLocation(latlng) {
     if (homeMarker) map.removeLayer(homeMarker);
     homeMarker = L.marker(latlng, { icon: homeIcon }).addTo(map);
     homeMarker.on('click', closeLoopAtHome); // Eseménykezelő a kör bezárásához
+    map.setView(latlng, 16); // Középre helyezzük a térképet a beállított otthonra
     localStorage.setItem('homeLocation', JSON.stringify(latlng));
     setMode('route');
 }
@@ -65,6 +66,7 @@ function loadHomeLocation() {
         const homeCoords = JSON.parse(savedHome);
         homeMarker = L.marker(homeCoords, { icon: homeIcon }).addTo(map);
         homeMarker.on('click', closeLoopAtHome); // Eseménykezelő a kör bezárásához
+        map.setView(homeCoords, 16); // Otthon betöltésekor is fókuszáljunk rá
     }
 }
 
