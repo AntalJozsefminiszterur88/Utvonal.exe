@@ -146,6 +146,11 @@ body {
 .leaflet-routing-container.leaflet-bar {
     display: none;
 }
+
+input[type="range"] {
+    width: 100%;
+    margin-top: 5px;
+}
 /* Ezt a részt másold a style.css fájl végére */
 
 .route-point-icon {
