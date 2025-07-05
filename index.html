@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futóútvonal Tervező (Ingyenes Verzió)</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+    
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Oldalsáv a vezérlőkkel -->
+        <div class="sidebar">
+            <header>
+                <h1>Futóútvonal Tervező</h1>
+            </header>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label>Kiindulópont</label>
+                    <p class="help-text">Használd az "Otthon beállítása" módot a lakhelyed mentéséhez, majd tervezz útvonalat.</p>
+                </div>
+
+                <div class="control-group">
+                    <label>Tervezési Mód</label>
+                    <div class="mode-buttons">
+                        <button id="mode-route" class="mode-btn active">Útvonal</button>
+                        <button id="mode-avoid" class="mode-btn">Elkerülő</button>
+                        <!-- ÚJ GOMB -->
+                        <button id="mode-home" class="mode-btn">Otthon beállítása</button>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h2>Útvonal Adatai</h2>
+                    <p>Távolság: <span id="distance">0.00 km</span></p>
+                </div>
+
+                <div class="actions">
+                    <!-- ÚJ GOMBOK -->
+                    <button id="goto-home-btn" class="action-btn-primary">Ugrás az otthonomhoz</button>
+                    <button id="clear-home-btn" class="action-btn-secondary">Otthon törlése</button>
+                    <button id="clear-btn">Térkép Törlése</button>
+                </div>
+            </div>
+
+            <footer>
+                <p>Készült a Discord stílusában.</p>
+            </footer>
+        </div>
+
+        <!-- Térkép konténer -->
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+    
+    <!-- Leaflet Routing Machine JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    
+    <script src="script.js"></script>
+</body>
+</html>

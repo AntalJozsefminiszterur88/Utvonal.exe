@@ -1,0 +1,156 @@
+/* Google Fonts import (opcionális, de szép) */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+:root {
+    --background-primary: #36393f;
+    --background-secondary: #2f3136;
+    --background-tertiary: #202225;
+    --header-primary: #ffffff;
+    --text-normal: #dcddde;
+    --text-muted: #72767d;
+    --interactive-normal: #b9bbbe;
+    --interactive-hover: #dcddde;
+    --interactive-active: #ffffff;
+    --button-primary-bg: #5865f2;
+    --button-primary-hover: #4752c4;
+    --button-danger-bg: #ed4245;
+    --button-danger-hover: #c03537;
+    --green-accent: #3ba55d;
+    --red-accent: #ed4245;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--background-tertiary);
+    color: var(--text-normal);
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 350px;
+    background-color: var(--background-secondary);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.sidebar header h1 {
+    color: var(--header-primary);
+    font-size: 24px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--background-tertiary);
+    padding-bottom: 15px;
+}
+
+.control-group {
+    margin-bottom: 20px;
+}
+
+.control-group label {
+    display: block;
+    color: var(--interactive-normal);
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.mode-buttons {
+    display: flex;
+    width: 100%;
+}
+
+.mode-btn {
+    flex-grow: 1;
+    padding: 10px;
+    border: none;
+    background-color: var(--background-tertiary);
+    color: var(--interactive-normal);
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    font-size: 14px;
+}
+.mode-btn:first-child { border-radius: 3px 0 0 3px; }
+.mode-btn:last-child { border-radius: 0 3px 3px 0; }
+.mode-btn.active { background-color: var(--green-accent); color: var(--interactive-active); }
+.mode-btn:not(.active):hover { background-color: #3b3e44; }
+
+.info-box {
+    background-color: var(--background-tertiary);
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+.info-box h2 { color: var(--header-primary); font-size: 16px; margin-bottom: 10px; }
+.info-box p { font-size: 14px; line-height: 1.6; }
+.info-box span { color: var(--header-primary); font-weight: 700; }
+.help-text { color: var(--text-muted); font-style: italic; font-size: 13px; }
+
+.actions {
+    margin-top: auto;
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Térköz a gombok között */
+}
+
+/* Általános gombstílus */
+.actions button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 3px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#clear-btn { background-color: var(--button-danger-bg); color: white; }
+#clear-btn:hover { background-color: var(--button-danger-hover); }
+
+/* ÚJ GOMBOK STÍLUSA */
+.action-btn-primary { background-color: var(--button-primary-bg); color: white; }
+.action-btn-primary:hover { background-color: var(--button-primary-hover); }
+
+.action-btn-secondary { background-color: var(--interactive-normal); color: var(--background-primary); }
+.action-btn-secondary:hover { background-color: var(--interactive-hover); }
+
+
+.sidebar footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--background-tertiary);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.map-container { flex-grow: 1; height: 100vh; }
+#map { width: 100%; height: 100%; }
+
+/* Leaflet UI elemek elrejtése, ha nem kellenek */
+.leaflet-routing-container.leaflet-bar {
+    display: none;
+}
+/* Ezt a részt másold a style.css fájl végére */
+
+.route-point-icon {
+    background-color: #5865f2; /* Kék szín */
+    border-radius: 50%; /* Teljesen kerek */
+    border: 2px solid white; /* Fehér keret */
+    box-shadow: 0 0 5px rgba(0,0,0,0.5); /* Enyhe árnyék */
+}
