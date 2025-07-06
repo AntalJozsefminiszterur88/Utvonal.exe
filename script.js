@@ -217,17 +217,45 @@ function closeLoopAtHome() {
     // Például letilthatnánk a további pontok hozzáadását, de egyelőre ennyi elég.
 }
 
+function isPointInAvoidZone(latlng) {
+    return avoidZones.some(z => map.distance(latlng, z.circle.getLatLng()) <= z.circle.getRadius());
+}
+
+function adjustPointAwayFromZones(latlng) {
+    let p = latlng;
+    avoidZones.forEach(z => {
+        const center = z.circle.getLatLng();
+        const radius = z.circle.getRadius();
+        const dist = map.distance(p, center);
+        if (dist <= radius + 20) {
+            const angle = Math.atan2(p.lat - center.lat, p.lng - center.lng) * 180 / Math.PI;
+            p = destinationPoint(center.lat, center.lng, radius + 20, angle);
+        }
+    });
+    return p;
+}
+
+function adjustWaypointsForAvoidZones(waypoints) {
+    return waypoints.map(wp => adjustPointAwayFromZones(wp));
+}
+
+function routeCrossesAvoidZone(coords) {
+    return coords.some(c => isPointInAvoidZone(L.latLng(c.lat, c.lng)));
+}
+
 function updateRoute() {
     if (routingControl) map.removeControl(routingControl);
-    
+
     // Töröljük a távolságot, ha nincs elég pont
     if (routeWaypoints.length < 2) {
         document.getElementById('distance').textContent = '0.00 km';
         return;
     }
 
+    const adjusted = adjustWaypointsForAvoidZones(routeWaypoints);
+
     routingControl = L.Routing.control({
-        waypoints: routeWaypoints,
+        waypoints: adjusted,
         router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
         show: false,
         addWaypoints: false,
@@ -239,6 +267,10 @@ function updateRoute() {
         const summary = e.routes[0].summary;
         const distance = summary.totalDistance / 1000;
         document.getElementById('distance').textContent = distance.toFixed(2) + ' km';
+
+        if (routeCrossesAvoidZone(e.routes[0].coordinates)) {
+            alert('Az útvonal áthalad egy elkerülő zónán. Próbálj meg más pontokat használni.');
+        }
     });
 }
 
@@ -331,11 +363,14 @@ function suggestRoute(distanceKm) {
     const home = homeMarker.getLatLng();
     const radius = (distanceKm * 1000) / (2 * Math.PI);
 
+    const offset = Math.random() * 360;
+
     routeWaypoints.push(home);
 
     // Négy pontot generálunk a kör különböző irányaiban
     [0, 90, 180, 270].forEach(angle => {
-        const p = destinationPoint(home.lat, home.lng, radius, angle);
+        let p = destinationPoint(home.lat, home.lng, radius, angle + offset);
+        p = adjustPointAwayFromZones(p);
         routeWaypoints.push(p);
         const marker = L.marker(p, { icon: routePointIcon }).addTo(map);
         marker.on('click', (e) => {
