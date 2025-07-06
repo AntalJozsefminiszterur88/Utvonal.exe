@@ -18,7 +18,7 @@ const homeIcon = L.icon({
     popupAnchor: [0, -40]
 });
 
-// Zászló ikon az elkerülő pontokhoz
+// Zászló ikon a piros zónákhoz
 const avoidFlagIcon = L.icon({
     iconUrl: 'zászló.png',
     iconSize: [30, 30],
@@ -57,12 +57,14 @@ if (suggestBtn) {
     });
 }
 
-// Elkerülő zóna előnézetéhez szükséges változók
+// Piros zóna előnézetéhez szükséges változók
 let previewMarker = null;
 let previewCircle = null;
+let canPlaceAvoid = false;
 
 function setMode(mode) {
-    if (currentMode === 'avoid') stopAvoidPreview();
+    if (currentMode === "avoid") stopAvoidPreview();
+    canPlaceAvoid = (mode === "avoid");
     currentMode = mode;
     ['route', 'avoid', 'home'].forEach(m => {
         document.getElementById(`mode-${m}`).classList.toggle('active', m === mode);
@@ -82,8 +84,11 @@ map.on('click', function(e) {
     if (currentMode === 'route') {
         addRoutePoint(e.latlng);
     } else if (currentMode === 'avoid') {
-        addAvoidFlag(e.latlng);
-        removePreview();
+        if (canPlaceAvoid) {
+            addAvoidFlag(e.latlng);
+            removePreview();
+            setMode('route');
+        }
     } else if (currentMode === 'home') {
         setHomeLocation(e.latlng);
     }
@@ -307,7 +312,7 @@ function updateRoute() {
         document.getElementById('distance').textContent = distance.toFixed(2) + ' km';
 
         if (routeCrossesAvoidZone(e.routes[0].coordinates)) {
-            alert('Az útvonal áthalad egy elkerülő zónán. Próbálj meg más pontokat használni.');
+            alert('Az útvonal áthalad egy piros zónán. Próbálj meg más pontokat használni.');
         }
     });
 }
@@ -462,7 +467,7 @@ function clearMap() {
     routeWaypoints = [];
     document.getElementById('distance').textContent = '0.00 km';
     
-    // Elkerülő zóna törlése
+    // Piros zóna törlése
     clearAvoidZone();
 }
 
