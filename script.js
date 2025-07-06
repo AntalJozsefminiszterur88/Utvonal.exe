@@ -51,7 +51,7 @@ if (suggestBtn) {
             alert('Adj meg érvényes távot!');
             return;
         }
-        suggestRoute(val);
+        suggestRoute(val).catch(err => alert(err.message || err));
     });
 }
 
@@ -352,7 +352,33 @@ function destinationPoint(lat, lng, distance, bearing) {
     return L.latLng(lat2 * 180 / Math.PI, lon2 * 180 / Math.PI);
 }
 
-function suggestRoute(distanceKm) {
+// Segédfüggvény egy kör mentén elhelyezett pontok generálásához
+function circularWaypoints(center, radius, segments) {
+    const points = [center];
+    const offset = Math.random() * 360;
+    for (let i = 0; i < segments; i++) {
+        const angle = offset + (360 / segments) * i;
+        let p = destinationPoint(center.lat, center.lng, radius, angle);
+        p = adjustPointAwayFromZones(p);
+        points.push(p);
+    }
+    points.push(center);
+    return points;
+}
+
+// OSRM lekérdezés az útvonal tényleges hosszának meghatározásához
+async function routeDistance(points) {
+    const coords = points.map(p => `${p.lng},${p.lat}`).join(';');
+    const url =
+        `https://router.project-osrm.org/route/v1/driving/${coords}?overview=false`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.routes || !data.routes[0]) throw new Error('Sikertelen útvonalkérés');
+    return data.routes[0].distance / 1000; // km
+}
+
+// Javított javasolt útvonal generátor
+async function suggestRoute(distanceKm) {
     if (!homeMarker) {
         alert('Előbb állítsd be az otthonod!');
         return;
@@ -361,26 +387,32 @@ function suggestRoute(distanceKm) {
     clearMap();
 
     const home = homeMarker.getLatLng();
-    const radius = (distanceKm * 1000) / (2 * Math.PI);
+    const segments = 8; // Pontok száma a körön
+    let radius = (distanceKm * 1000) / (2 * Math.PI);
 
-    const offset = Math.random() * 360;
+    let points = circularWaypoints(home, radius, segments);
+    let dist = await routeDistance(points);
 
-    routeWaypoints.push(home);
+    // Iteratív korrekció, amíg közel nem kerülünk a kívánt távhoz
+    for (let i = 0; i < 4 && Math.abs(dist - distanceKm) > 0.2; i++) {
+        radius *= distanceKm / dist;
+        points = circularWaypoints(home, radius, segments);
+        dist = await routeDistance(points);
+    }
 
-    // Négy pontot generálunk a kör különböző irányaiban
-    [0, 90, 180, 270].forEach(angle => {
-        let p = destinationPoint(home.lat, home.lng, radius, angle + offset);
-        p = adjustPointAwayFromZones(p);
-        routeWaypoints.push(p);
+    routeWaypoints = points;
+
+    // Jelölők létrehozása (az első és utolsó pont az otthon)
+    for (let i = 1; i < points.length - 1; i++) {
+        const p = points[i];
         const marker = L.marker(p, { icon: routePointIcon }).addTo(map);
         marker.on('click', (e) => {
             L.DomEvent.stopPropagation(e);
             removeRoutePoint(marker, p);
         });
         routeMarkers.push(marker);
-    });
+    }
 
-    routeWaypoints.push(home);
     updateRoute();
 }
 
