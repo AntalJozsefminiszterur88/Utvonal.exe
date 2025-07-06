@@ -7,8 +7,6 @@ let routingControl = null;
 let avoidZones = [];
 let currentAvoidRadius = 500; // alapértelmezett hatótáv méterben
 let homeMarker = null;
-let isRightPanning = false;
-let lastRightPos = null;
 
 // ÚJ: házikó ikon a repo-ban található képből
 const homeIcon = L.icon({
@@ -83,12 +81,6 @@ function setMode(mode) {
 map.on('click', function(e) {
     if (currentMode === 'route') {
         addRoutePoint(e.latlng);
-    } else if (currentMode === 'avoid') {
-        if (canPlaceAvoid) {
-            addAvoidFlag(e.latlng);
-            removePreview();
-            setMode('route');
-        }
     } else if (currentMode === 'home') {
         setHomeLocation(e.latlng);
     }
@@ -99,10 +91,7 @@ function startAvoidPreview() {
     map.on('mousemove', onAvoidMouseMove);
     const c = map.getContainer();
     c.addEventListener('wheel', onAvoidWheel);
-    c.addEventListener('contextmenu', preventContextMenu);
-    c.addEventListener('mousedown', onRightDown);
-    c.addEventListener('mousemove', onRightMove);
-    c.addEventListener('mouseup', onRightUp);
+    map.on('contextmenu', onAvoidRightClick);
 }
 
 function stopAvoidPreview() {
@@ -110,10 +99,7 @@ function stopAvoidPreview() {
     map.off('mousemove', onAvoidMouseMove);
     const c = map.getContainer();
     c.removeEventListener('wheel', onAvoidWheel);
-    c.removeEventListener('contextmenu', preventContextMenu);
-    c.removeEventListener('mousedown', onRightDown);
-    c.removeEventListener('mousemove', onRightMove);
-    c.removeEventListener('mouseup', onRightUp);
+    map.off('contextmenu', onAvoidRightClick);
     removePreview();
 }
 
@@ -143,31 +129,14 @@ function onAvoidWheel(e) {
     if (previewCircle) previewCircle.setRadius(currentAvoidRadius);
 }
 
-function preventContextMenu(e) {
-    e.preventDefault();
+function onAvoidRightClick(e) {
+    if (currentMode !== 'avoid' || !canPlaceAvoid) return;
+    e.originalEvent.preventDefault();
+    addAvoidFlag(e.latlng);
+    removePreview();
+    setMode('route');
 }
 
-function onRightDown(e) {
-    if (e.button !== 2) return;
-    isRightPanning = true;
-    lastRightPos = L.point(e.clientX, e.clientY);
-    e.preventDefault();
-}
-
-function onRightMove(e) {
-    if (!isRightPanning) return;
-    const current = L.point(e.clientX, e.clientY);
-    const diff = current.subtract(lastRightPos);
-    map.panBy([-diff.x, -diff.y], { animate: false });
-    lastRightPos = current;
-    e.preventDefault();
-}
-
-function onRightUp(e) {
-    if (e.button === 2) {
-        isRightPanning = false;
-    }
-}
 
 function removePreview() {
     if (previewMarker) { map.removeLayer(previewMarker); previewMarker = null; }
