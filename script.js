@@ -7,6 +7,8 @@ let routingControl = null;
 let avoidZones = [];
 let currentAvoidRadius = 500; // alapértelmezett hatótáv méterben
 let homeMarker = null;
+let isRightPanning = false;
+let lastRightPos = null;
 
 // ÚJ: házikó ikon a repo-ban található képből
 const homeIcon = L.icon({
@@ -90,13 +92,23 @@ map.on('click', function(e) {
 function startAvoidPreview() {
     map.scrollWheelZoom.disable();
     map.on('mousemove', onAvoidMouseMove);
-    map.on('wheel', onAvoidWheel);
+    const c = map.getContainer();
+    c.addEventListener('wheel', onAvoidWheel);
+    c.addEventListener('contextmenu', preventContextMenu);
+    c.addEventListener('mousedown', onRightDown);
+    c.addEventListener('mousemove', onRightMove);
+    c.addEventListener('mouseup', onRightUp);
 }
 
 function stopAvoidPreview() {
     map.scrollWheelZoom.enable();
     map.off('mousemove', onAvoidMouseMove);
-    map.off('wheel', onAvoidWheel);
+    const c = map.getContainer();
+    c.removeEventListener('wheel', onAvoidWheel);
+    c.removeEventListener('contextmenu', preventContextMenu);
+    c.removeEventListener('mousedown', onRightDown);
+    c.removeEventListener('mousemove', onRightMove);
+    c.removeEventListener('mouseup', onRightUp);
     removePreview();
 }
 
@@ -124,6 +136,32 @@ function onAvoidWheel(e) {
     else currentAvoidRadius -= 100;
     currentAvoidRadius = Math.max(100, Math.min(5000, currentAvoidRadius));
     if (previewCircle) previewCircle.setRadius(currentAvoidRadius);
+}
+
+function preventContextMenu(e) {
+    e.preventDefault();
+}
+
+function onRightDown(e) {
+    if (e.button !== 2) return;
+    isRightPanning = true;
+    lastRightPos = L.point(e.clientX, e.clientY);
+    e.preventDefault();
+}
+
+function onRightMove(e) {
+    if (!isRightPanning) return;
+    const current = L.point(e.clientX, e.clientY);
+    const diff = current.subtract(lastRightPos);
+    map.panBy([-diff.x, -diff.y], { animate: false });
+    lastRightPos = current;
+    e.preventDefault();
+}
+
+function onRightUp(e) {
+    if (e.button === 2) {
+        isRightPanning = false;
+    }
 }
 
 function removePreview() {
