@@ -417,7 +417,7 @@ async function suggestRoute(distanceKm) {
 
     showPlanning();
     try {
-        clearMap();
+        clearRoute();
 
         const home = homeMarker.getLatLng();
         const segments = 8; // Pontok száma a körön
@@ -454,14 +454,16 @@ async function suggestRoute(distanceKm) {
     }
 }
 
-function clearMap() {
-    // Útvonal és kék pontok törlése
+function clearRoute() {
     if (routingControl) map.removeControl(routingControl);
     routeMarkers.forEach(marker => map.removeLayer(marker));
     routeMarkers = [];
     routeWaypoints = [];
     document.getElementById('distance').textContent = '0.00 km';
-    
+}
+
+function clearMap() {
+    clearRoute();
     // Piros zóna törlése
     clearAvoidZone();
 }
