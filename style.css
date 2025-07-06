@@ -178,3 +178,52 @@ input[type="range"] {
 .avoid-popup button:hover {
     background-color: var(--button-danger-hover);
 }
+
+/* Tervezés overlay */
+#planning-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#planning-overlay .planning-box {
+    background-color: var(--background-tertiary);
+    padding: 20px 30px;
+    border-radius: 5px;
+    text-align: center;
+    color: var(--header-primary);
+    min-width: 200px;
+}
+
+#planning-overlay .progress-bar {
+    width: 100%;
+    height: 6px;
+    background-color: var(--background-secondary);
+    overflow: hidden;
+    border-radius: 3px;
+    margin-top: 10px;
+    position: relative;
+}
+
+#planning-overlay .progress-bar::after {
+    content: '';
+    position: absolute;
+    left: -40%;
+    top: 0;
+    width: 40%;
+    height: 100%;
+    background-color: var(--button-primary-bg);
+    animation: loading 1s linear infinite;
+}
+
+@keyframes loading {
+    0% { left: -40%; }
+    100% { left: 100%; }
+}

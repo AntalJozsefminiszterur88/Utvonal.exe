@@ -38,6 +38,17 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '© OpenStreetMap © CARTO',
 }).addTo(map);
 
+// Tervezés overlay kezelése
+function showPlanning() {
+    const overlay = document.getElementById('planning-overlay');
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function hidePlanning() {
+    const overlay = document.getElementById('planning-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
 // Eseménykezelők
 document.getElementById('mode-route').addEventListener('click', () => setMode('route'));
 document.getElementById('mode-avoid').addEventListener('click', () => setMode('avoid'));
@@ -289,9 +300,12 @@ function routeCrossesAvoidZone(coords) {
 function updateRoute() {
     if (routingControl) map.removeControl(routingControl);
 
+    showPlanning();
+
     // Töröljük a távolságot, ha nincs elég pont
     if (routeWaypoints.length < 2) {
         document.getElementById('distance').textContent = '0.00 km';
+        hidePlanning();
         return;
     }
 
@@ -314,6 +328,11 @@ function updateRoute() {
         if (routeCrossesAvoidZone(e.routes[0].coordinates)) {
             alert('Az útvonal áthalad egy piros zónán. Próbálj meg más pontokat használni.');
         }
+        hidePlanning();
+    });
+
+    routingControl.on('routingerror', function() {
+        hidePlanning();
     });
 }
 
@@ -427,36 +446,43 @@ async function suggestRoute(distanceKm) {
         return;
     }
 
-    clearMap();
+    showPlanning();
+    try {
+        clearMap();
 
-    const home = homeMarker.getLatLng();
-    const segments = 8; // Pontok száma a körön
-    let radius = (distanceKm * 1000) / (2 * Math.PI);
+        const home = homeMarker.getLatLng();
+        const segments = 8; // Pontok száma a körön
+        let radius = (distanceKm * 1000) / (2 * Math.PI);
 
-    let points = circularWaypoints(home, radius, segments);
-    let dist = await routeDistance(points);
+        let points = circularWaypoints(home, radius, segments);
+        let dist = await routeDistance(points);
 
-    // Iteratív korrekció, amíg közel nem kerülünk a kívánt távhoz
-    for (let i = 0; i < 4 && Math.abs(dist - distanceKm) > 0.2; i++) {
-        radius *= distanceKm / dist;
-        points = circularWaypoints(home, radius, segments);
-        dist = await routeDistance(points);
+        // Iteratív korrekció, amíg közel nem kerülünk a kívánt távhoz
+        for (let i = 0; i < 4 && Math.abs(dist - distanceKm) > 0.2; i++) {
+            radius *= distanceKm / dist;
+            points = circularWaypoints(home, radius, segments);
+            dist = await routeDistance(points);
+        }
+
+        routeWaypoints = points;
+
+        // Jelölők létrehozása (az első és utolsó pont az otthon)
+        for (let i = 1; i < points.length - 1; i++) {
+            const p = points[i];
+            const marker = L.marker(p, { icon: routePointIcon }).addTo(map);
+            marker.on('click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                removeRoutePoint(marker, p);
+            });
+            routeMarkers.push(marker);
+        }
+
+        updateRoute();
+        // hidePlanning() will be triggered by updateRoute when route ready
+    } catch (err) {
+        hidePlanning();
+        throw err;
     }
-
-    routeWaypoints = points;
-
-    // Jelölők létrehozása (az első és utolsó pont az otthon)
-    for (let i = 1; i < points.length - 1; i++) {
-        const p = points[i];
-        const marker = L.marker(p, { icon: routePointIcon }).addTo(map);
-        marker.on('click', (e) => {
-            L.DomEvent.stopPropagation(e);
-            removeRoutePoint(marker, p);
-        });
-        routeMarkers.push(marker);
-    }
-
-    updateRoute();
 }
 
 function clearMap() {
